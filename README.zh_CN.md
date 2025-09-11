@@ -26,6 +26,20 @@
 bash <(curl -Ls https://raw.githubusercontent.com/mhsanaei/3x-ui/master/install.sh)
 ```
 
+## Docker
+
+```
+docker run -itd \
+-e XRAY_VMESS_AEAD_FORCED=false \
+-e XUI_ENABLE_FAIL2BAN=true \
+-v /data/x-ui/bin:/app/bin \
+-v /data/x-ui/cert:/root/cert \
+--network=host \
+--restart=unless-stopped \
+--name 3x-ui \
+ghcr.io/gucooing/3x-ui:main
+```
+
 完整文档请参阅 [项目Wiki](https://github.com/MHSanaei/3x-ui/wiki)。
 
 ## 特别感谢
