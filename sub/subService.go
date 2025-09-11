@@ -39,7 +39,7 @@ func (s *SubService) GetSubs(subId string, host string) ([]string, string, error
 	var result []string
 	var header string
 	var traffic xray.ClientTraffic
-	var clientTraffics []xray.ClientTraffic
+	var clientTraffics []*xray.ClientTraffic
 	inbounds, err := s.getInboundsBySubId(subId)
 	if err != nil {
 		return nil, "", err
@@ -72,8 +72,12 @@ func (s *SubService) GetSubs(subId string, host string) ([]string, string, error
 		for _, client := range clients {
 			if client.Enable && client.SubID == subId {
 				link := s.getLink(inbound, client.Email)
+				clientTraffic := s.getClientTraffics(inbound.ClientStats, client.Email)
+				if link == "" || clientTraffic == nil {
+					continue
+				}
 				result = append(result, link)
-				clientTraffics = append(clientTraffics, s.getClientTraffics(inbound.ClientStats, client.Email))
+				clientTraffics = append(clientTraffics, clientTraffic)
 			}
 		}
 	}
@@ -121,13 +125,13 @@ func (s *SubService) getInboundsBySubId(subId string) ([]*model.Inbound, error) 
 	return inbounds, nil
 }
 
-func (s *SubService) getClientTraffics(traffics []xray.ClientTraffic, email string) xray.ClientTraffic {
+func (s *SubService) getClientTraffics(traffics []xray.ClientTraffic, email string) *xray.ClientTraffic {
 	for _, traffic := range traffics {
 		if traffic.Email == email {
-			return traffic
+			return &traffic
 		}
 	}
-	return xray.ClientTraffic{}
+	return nil
 }
 
 func (s *SubService) getFallbackMaster(dest string, streamSettings string) (string, int, string, error) {
@@ -269,6 +273,7 @@ func (s *SubService) genVmessLink(inbound *model.Inbound, email string) string {
 			clientIndex = i
 			break
 		}
+		return ""
 	}
 	obj["id"] = clients[clientIndex].ID
 	obj["scy"] = clients[clientIndex].Security

@@ -5,6 +5,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/fs"
@@ -90,6 +91,11 @@ type Status struct {
 
 type Release struct {
 	TagName string `json:"tag_name"`
+}
+
+type GithubApi struct {
+	Message          string `json:"message"`
+	DocumentationUrl string `json:"documentation_url"`
 }
 
 type ServerService struct {
@@ -327,7 +333,9 @@ func (s *ServerService) GetXrayVersions() ([]string, error) {
 
 	var releases []Release
 	if err := json.Unmarshal(buffer.Bytes(), &releases); err != nil {
-		return nil, err
+		var githubApi GithubApi
+		json.Unmarshal(buffer.Bytes(), &githubApi)
+		return nil, errors.New(githubApi.Message)
 	}
 
 	var versions []string
@@ -469,8 +477,7 @@ func (s *ServerService) UpdateXray(version string) error {
 
 	// 4. Extract correct binary
 	if runtime.GOOS == "windows" {
-		targetBinary := filepath.Join("bin", "xray-windows-amd64.exe")
-		err = copyZipFile("xray.exe", targetBinary)
+		err = copyZipFile("xray.exe", xray.GetBinaryPath())
 	} else {
 		err = copyZipFile("xray", xray.GetBinaryPath())
 	}
@@ -538,16 +545,16 @@ func (s *ServerService) GetXrayLogs(
 		line := strings.TrimSpace(scanner.Text())
 
 		if line == "" || strings.Contains(line, "api -> api") {
-			//skipping empty lines and api calls
+			// skipping empty lines and api calls
 			continue
 		}
 
 		if filter != "" && !strings.Contains(line, filter) {
-			//applying filter if it's not empty
+			// applying filter if it's not empty
 			continue
 		}
 
-		//adding suffixes to further distinguish entries by outbound
+		// adding suffixes to further distinguish entries by outbound
 		if hasSuffix(line, freedoms) {
 			if showDirect == "false" {
 				continue

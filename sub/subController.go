@@ -51,9 +51,11 @@ func NewSUBController(
 func (a *SUBController) initRouter(g *gin.RouterGroup) {
 	gLink := g.Group(a.subPath)
 	gJson := g.Group(a.subJsonPath)
+	gClash := g.Group("/clash")
 
 	gLink.GET(":subid", a.subs)
 	gJson.GET(":subid", a.subJsons)
+	gClash.GET(":subid", a.subClash)
 }
 
 func (a *SUBController) subs(c *gin.Context) {
@@ -111,6 +113,36 @@ func (a *SUBController) subJsons(c *gin.Context) {
 		}
 	}
 	jsonSub, header, err := a.subJsonService.GetJson(subId, host)
+	if err != nil || len(jsonSub) == 0 {
+		c.String(400, "Error!")
+	} else {
+
+		// Add headers
+		c.Writer.Header().Set("Subscription-Userinfo", header)
+		c.Writer.Header().Set("Profile-Update-Interval", a.updateInterval)
+		c.Writer.Header().Set("Profile-Title", "base64:"+base64.StdEncoding.EncodeToString([]byte(a.subTitle)))
+
+		c.String(200, jsonSub)
+	}
+}
+
+func (a *SUBController) subClash(c *gin.Context) {
+	subId := c.Param("subid")
+	var host string
+	if h, err := getHostFromXFH(c.GetHeader("X-Forwarded-Host")); err == nil {
+		host = h
+	}
+	if host == "" {
+		host = c.GetHeader("X-Real-IP")
+	}
+	if host == "" {
+		var err error
+		host, _, err = net.SplitHostPort(c.Request.Host)
+		if err != nil {
+			host = c.Request.Host
+		}
+	}
+	jsonSub, header, err := a.subJsonService.GetClash(subId, host)
 	if err != nil || len(jsonSub) == 0 {
 		c.String(400, "Error!")
 	} else {

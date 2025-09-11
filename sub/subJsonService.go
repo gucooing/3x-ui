@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strings"
 
+	"gopkg.in/yaml.v3"
+
 	"x-ui/database/model"
 	"x-ui/logger"
 	"x-ui/util/json_util"
@@ -75,7 +77,7 @@ func (s *SubJsonService) GetJson(subId string, host string) (string, string, err
 
 	var header string
 	var traffic xray.ClientTraffic
-	var clientTraffics []xray.ClientTraffic
+	var clientTraffics []*xray.ClientTraffic
 	var configArray []json_util.RawMessage
 
 	// Prepare Inbounds
@@ -98,9 +100,12 @@ func (s *SubJsonService) GetJson(subId string, host string) (string, string, err
 
 		for _, client := range clients {
 			if client.Enable && client.SubID == subId {
-				clientTraffics = append(clientTraffics, s.SubService.getClientTraffics(inbound.ClientStats, client.Email))
-				newConfigs := s.getConfig(inbound, client, host)
-				configArray = append(configArray, newConfigs...)
+				clientTraffic := s.SubService.getClientTraffics(inbound.ClientStats, client.Email)
+				if clientTraffic != nil {
+					clientTraffics = append(clientTraffics, clientTraffic)
+					newConfigs := s.getConfig(inbound, client, host)
+					configArray = append(configArray, newConfigs...)
+				}
 			}
 		}
 	}
@@ -209,6 +214,141 @@ func (s *SubJsonService) getConfig(inbound *model.Inbound, client model.Client, 
 	}
 
 	return newJsonArray
+}
+
+type Proxies struct {
+	Proxies []*Proxie `yaml:"proxies"`
+}
+
+type Proxie struct {
+	Server   string         `yaml:"server"`
+	Port     int            `yaml:"port"`
+	Cipher   string         `yaml:"cipher"`
+	Udp      bool           `yaml:"udp"`
+	Network  string         `yaml:"network"`
+	Type     model.Protocol `yaml:"type"`
+	Uuid     string         `yaml:"uuid"`
+	AlterId  int            `yaml:"alterId"`
+	Name     string         `yaml:"name"`
+	HttpOpts *HttpOpts      `yaml:"http-opts"`
+}
+
+type HttpOpts struct {
+	Path   []string `yaml:"path"`
+	Method string   `yaml:"method"`
+}
+
+func (s *SubJsonService) GetClash(subId string, host string) (string, string, error) {
+	inbounds, err := s.SubService.getInboundsBySubId(subId)
+	if err != nil || len(inbounds) == 0 {
+		return "", "", err
+	}
+	yamls := &Proxies{
+		Proxies: make([]*Proxie, 0),
+	}
+
+	var header string
+	var traffic xray.ClientTraffic
+
+	// Prepare Inbounds
+	for _, inbound := range inbounds {
+		clients, err := s.inboundService.GetClients(inbound)
+		if err != nil {
+			logger.Error("SubJsonService - GetClients: Unable to get clients from inbound")
+		}
+		if clients == nil {
+			continue
+		}
+		if len(inbound.Listen) > 0 && inbound.Listen[0] == '@' {
+			listen, port, streamSettings, err := s.SubService.getFallbackMaster(inbound.Listen, inbound.StreamSettings)
+			if err == nil {
+				inbound.Listen = listen
+				inbound.Port = port
+				inbound.StreamSettings = streamSettings
+			}
+		}
+
+		for _, client := range clients {
+			if client.Enable && client.SubID == subId {
+				clientTraffic := s.SubService.getClientTraffics(inbound.ClientStats, client.Email)
+				if clientTraffic == nil {
+					continue
+				}
+				newConfigs := s.getProxie(inbound, client, host)
+				if newConfigs != nil {
+					logger.Error("还没处理的代理类型 inbound.ID:%v", inbound.Id)
+					continue
+				}
+				yamls.Proxies = append(yamls.Proxies, newConfigs)
+			}
+		}
+	}
+
+	// Combile outbounds
+	final, err := yaml.Marshal(yamls)
+
+	header = fmt.Sprintf("upload=%d; download=%d; total=%d; expire=%d", traffic.Up, traffic.Down, traffic.Total, traffic.ExpiryTime/1000)
+	return string(final), header, nil
+}
+
+func (s *SubJsonService) getProxie(inbound *model.Inbound, client model.Client, host string) *Proxie {
+	var streamSettings map[string]any
+	json.Unmarshal([]byte(inbound.StreamSettings), &streamSettings)
+	proxie := &Proxie{
+		Server:   host,
+		Port:     inbound.Port,
+		Cipher:   client.Security,
+		Udp:      true,
+		Network:  "",
+		Type:     inbound.Protocol,
+		Uuid:     client.ID,
+		AlterId:  0,
+		Name:     inbound.Remark,
+		HttpOpts: nil,
+	}
+	if network, ok := streamSettings["network"].(string); ok {
+		switch network {
+		case "tcp":
+			s.getClashTcpSettings(proxie, streamSettings["tcpSettings"].(map[string]interface{}))
+		default:
+			logger.Error("未知的 streamSettings network：%s", network)
+			return nil
+		}
+	}
+
+	return proxie
+}
+
+func (s *SubJsonService) getClashTcpSettings(proxie *Proxie, tcpSettings map[string]interface{}) {
+	header, ok := tcpSettings["header"].(map[string]interface{})
+	if !ok {
+		return
+	}
+	proxie.Network, ok = header["type"].(string)
+	if !ok {
+		return
+	}
+	switch proxie.Network {
+	case "http":
+		request, ok := header["request"].(map[string]interface{})
+		if !ok {
+			return
+		}
+		ho := &HttpOpts{
+			Path:   make([]string, 0),
+			Method: request["method"].(string),
+		}
+		path, ok := request["path"].([]interface{})
+		if ok {
+			for _, pathItem := range path {
+				ho.Path = append(ho.Path, pathItem.(string))
+			}
+		}
+		proxie.HttpOpts = ho
+	default:
+		logger.Error("未知的 tcpSettings type：%s", proxie.Network)
+		return
+	}
 }
 
 func (s *SubJsonService) streamData(stream string) map[string]any {

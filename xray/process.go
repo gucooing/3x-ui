@@ -18,6 +18,9 @@ import (
 )
 
 func GetBinaryName() string {
+	if runtime.GOOS == "windows" {
+		return fmt.Sprintf("xray-%s-%s.exe", runtime.GOOS, runtime.GOARCH)
+	}
 	return fmt.Sprintf("xray-%s-%s", runtime.GOOS, runtime.GOARCH)
 }
 
@@ -239,7 +242,7 @@ func (p *process) Stop() error {
 	if !p.IsRunning() {
 		return errors.New("xray is not running")
 	}
-	
+
 	if runtime.GOOS == "windows" {
 		return p.cmd.Process.Kill()
 	} else {

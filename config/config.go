@@ -50,11 +50,12 @@ func IsDebug() bool {
 }
 
 func GetBinFolderPath() string {
-	binFolderPath := os.Getenv("XUI_BIN_FOLDER")
-	if binFolderPath == "" {
-		binFolderPath = "bin"
-	}
-	return binFolderPath
+	// binFolderPath := os.Getenv("XUI_BIN_FOLDER")
+	// if binFolderPath == "" {
+	// 	binFolderPath = "bin"
+	// }
+	// return binFolderPath
+	return "./bin"
 }
 
 func getBaseDir() string {
@@ -75,14 +76,14 @@ func getBaseDir() string {
 }
 
 func GetDBFolderPath() string {
-	dbFolderPath := os.Getenv("XUI_DB_FOLDER")
-	if dbFolderPath != "" {
-		return dbFolderPath
-	}
-	if runtime.GOOS == "windows" {
-		return getBaseDir()
-	}
-	return "/etc/x-ui"
+	// dbFolderPath := os.Getenv("XUI_DB_FOLDER")
+	// if dbFolderPath != "" {
+	// 	return dbFolderPath
+	// }
+	// if runtime.GOOS == "windows" {
+	// 	return getBaseDir()
+	// }
+	return "./bin"
 }
 
 func GetDBPath() string {
@@ -90,14 +91,14 @@ func GetDBPath() string {
 }
 
 func GetLogFolder() string {
-	logFolderPath := os.Getenv("XUI_LOG_FOLDER")
-	if logFolderPath != "" {
-		return logFolderPath
-	}
-	if runtime.GOOS == "windows" {
-		return filepath.Join(".", "log")
-	}
-	return "/var/log"
+	// logFolderPath := os.Getenv("XUI_LOG_FOLDER")
+	// if logFolderPath != "" {
+	// 	return logFolderPath
+	// }
+	// if runtime.GOOS == "windows" {
+	// 	return filepath.Join(".", "log")
+	// }
+	return "./log"
 }
 
 func copyFile(src, dst string) error {
