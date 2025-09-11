@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"encoding/json"
 	"fmt"
+	"math"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -249,6 +250,7 @@ func (s *SubJsonService) GetClash(subId string, host string) (string, string, er
 
 	var header string
 	var traffic xray.ClientTraffic
+	var clientTraffics []*xray.ClientTraffic
 
 	// Prepare Inbounds
 	for _, inbound := range inbounds {
@@ -275,13 +277,40 @@ func (s *SubJsonService) GetClash(subId string, host string) (string, string, er
 					continue
 				}
 				newConfigs := s.getProxie(inbound, client, host)
-				if newConfigs != nil {
+				if newConfigs == nil {
 					logger.Error("还没处理的代理类型 inbound.ID:%v", inbound.Id)
 					continue
 				}
+				clientTraffics = append(clientTraffics, clientTraffic)
 				yamls.Proxies = append(yamls.Proxies, newConfigs)
 			}
 		}
+	}
+
+	// Prepare statistics
+	for index, clientTraffic := range clientTraffics {
+		if index == 0 {
+			traffic.Up = clientTraffic.Up
+			traffic.Down = clientTraffic.Down
+			traffic.Total = clientTraffic.Total
+			if clientTraffic.ExpiryTime > 0 {
+				traffic.ExpiryTime = clientTraffic.ExpiryTime
+			}
+		} else {
+			traffic.Up += clientTraffic.Up
+			traffic.Down += clientTraffic.Down
+			if traffic.Total == 0 || clientTraffic.Total == 0 {
+				traffic.Total = 0
+			} else {
+				traffic.Total += clientTraffic.Total
+			}
+			if clientTraffic.ExpiryTime != traffic.ExpiryTime {
+				traffic.ExpiryTime = 0
+			}
+		}
+	}
+	if traffic.Total == 0 {
+		traffic.Total = math.MaxInt64
 	}
 
 	// Combile outbounds
