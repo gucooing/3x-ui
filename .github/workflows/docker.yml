@@ -19,7 +19,6 @@ jobs:
       uses: docker/metadata-action@v5
       with:
         images: |
-          gucooing/3x-ui
           ghcr.io/gucooing/3x-ui
         tags: |
           type=ref,event=branch
@@ -40,12 +39,8 @@ jobs:
 #        username: ${{ secrets.DOCKER_HUB_USERNAME }}
 #        password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
-    - name: Login to GHCR
-      uses: docker/login-action@v3
-      with:
-        registry: ghcr.io
-        username: ${{ github.repository_owner }}
-        password: ${{ secrets.TOKEN }}
+    - name: github docker login
+      run: echo ${{ secrets.TOKEN }} | docker login ghcr.io -u gucooing --password-stdin
 
     - name: Build and push Docker image
       uses: docker/build-push-action@v6
