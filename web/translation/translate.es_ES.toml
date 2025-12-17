@@ -72,6 +72,20 @@
 "emptyReverseDesc" = "No hay proxies inversos añadidos."
 "somethingWentWrong" = "Algo salió mal"
 
+[subscription]
+"title" = "Información de suscripción"
+"subId" = "ID de suscripción"
+"status" = "Estado"
+"downloaded" = "Descargado"
+"uploaded" = "Subido"
+"expiry" = "Caducidad"
+"totalQuota" = "Cuota total"
+"individualLinks" = "Enlaces individuales"
+"active" = "Activo"
+"inactive" = "Inactivo"
+"unlimited" = "Ilimitado"
+"noExpiry" = "Sin caducidad"
+
 [menu]
 "theme" = "Tema"
 "dark" = "Oscuro"
@@ -230,6 +244,9 @@
 "exportInbound" = "Exportación entrante"
 "import" = "Importar"
 "importInbound" = "Importar un entrante"
+"periodicTrafficResetTitle" = "Reset de Tráfico"
+"periodicTrafficResetDesc" = "Reiniciar automáticamente el contador de tráfico en intervalos especificados"
+"lastReset" = "Último reinicio"
 
 [pages.client]
 "add" = "Agregar Cliente"
@@ -248,6 +265,12 @@
 "days" = "Día(s)"
 "renew" = "Renovación automática"
 "renewDesc" = "Renovación automática después de la expiración. (0 = desactivar) (unidad: día)"
+
+[pages.inbounds.periodicTrafficReset]
+"never" = "Nunca"
+"daily" = "Diariamente"
+"weekly" = "Semanalmente"
+"monthly" = "Mensualmente"
 
 [pages.inbounds.toasts]
 "obtain" = "Recibir"
@@ -348,6 +371,7 @@
 "subSettings" = "Suscripción"
 "subEnable" = "Habilitar Servicio"
 "subEnableDesc" = "Función de suscripción con configuración separada."
+"subJsonEnable" = "Habilitar/Deshabilitar el endpoint de suscripción JSON de forma independiente."
 "subTitle" = "Título de la Suscripción"
 "subTitleDesc" = "Título mostrado en el cliente de VPN"
 "subListen" = "Listening IP"
@@ -639,6 +663,7 @@
 "active" = "💡 Activo: {{ .Enable }}\r\n"
 "enabled" = "🚨 Habilitado: {{ .Enable }}\r\n"
 "online" = "🌐 Estado de conexión: {{ .Status }}\r\n"
+"lastOnline" = "🔙 Última conexión: {{ .Time }}\r\n"
 "email" = "📧 Email: {{ .Email }}\r\n"
 "upload" = "🔼 Subida: ↑{{ .Upload }}\r\n"
 "download" = "🔽 Bajada: ↓{{ .Download }}\r\n"
@@ -664,9 +689,9 @@
 "inbound_client_data_id" = "🔄 Entrada: {{ .InboundRemark }}\n\n🔑 ID: {{ .ClientId }}\n📧 Correo: {{ .ClientEmail }}\n📊 Tráfico: {{ .ClientTraffic }}\n📅 Fecha de expiración: {{ .ClientExp }}\n🌐 Límite de IP: {{ .IpLimit }}\n💬 Comentario: {{ .ClientComment }}\n\n¡Ahora puedes agregar al cliente a la entrada!"
 "inbound_client_data_pass" = "🔄 Entrada: {{ .InboundRemark }}\n\n🔑 Contraseña: {{ .ClientPass }}\n📧 Correo: {{ .ClientEmail }}\n📊 Tráfico: {{ .ClientTraffic }}\n📅 Fecha de expiración: {{ .ClientExp }}\n🌐 Límite de IP: {{ .IpLimit }}\n💬 Comentario: {{ .ClientComment }}\n\n¡Ahora puedes agregar al cliente a la entrada!"
 "cancel" = "❌ ¡Proceso cancelado! \n\nPuedes /start de nuevo en cualquier momento. 🔄"
-"error_add_client"  = "⚠️ Error:\n\n {{ .error }}"
-"using_default_value"  = "Está bien, me quedaré con el valor predeterminado. 😊"
-"incorrect_input" ="Tu entrada no es válida.\nLas frases deben ser continuas sin espacios.\nEjemplo correcto: aaaaaa\nEjemplo incorrecto: aaa aaa 🚫"
+"error_add_client" = "⚠️ Error:\n\n {{ .error }}"
+"using_default_value" = "Está bien, me quedaré con el valor predeterminado. 😊"
+"incorrect_input" = "Tu entrada no es válida.\nLas frases deben ser continuas sin espacios.\nEjemplo correcto: aaaaaa\nEjemplo incorrecto: aaa aaa 🚫"
 "AreYouSure" = "¿Estás seguro? 🤔"
 "SuccessResetTraffic" = "📧 Correo: {{ .ClientEmail }}\n🏁 Resultado: ✅ Éxito"
 "FailedResetTraffic" = "📧 Correo: {{ .ClientEmail }}\n🏁 Resultado: ❌ Fallido \n\n🛠️ Error: [ {{ .ErrorMessage }} ]"
