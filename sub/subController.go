@@ -3,6 +3,7 @@ package sub
 import (
 	"encoding/base64"
 	"fmt"
+	"net"
 	"strings"
 
 	"github.com/mhsanaei/3x-ui/v2/config"

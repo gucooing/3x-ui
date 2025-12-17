@@ -44,7 +44,7 @@ func (s *SubService) GetSubs(subId string, host string) ([]string, int64, xray.C
 	var result []string
 	var traffic xray.ClientTraffic
 	var lastOnline int64
-	var clientTraffics []xray.ClientTraffic
+	var clientTraffics []*xray.ClientTraffic
 	inbounds, err := s.getInboundsBySubId(subId)
 	if err != nil {
 		return nil, 0, traffic, err
@@ -129,13 +129,13 @@ func (s *SubService) getInboundsBySubId(subId string) ([]*model.Inbound, error) 
 	return inbounds, nil
 }
 
-func (s *SubService) getClientTraffics(traffics []xray.ClientTraffic, email string) xray.ClientTraffic {
+func (s *SubService) getClientTraffics(traffics []xray.ClientTraffic, email string) *xray.ClientTraffic {
 	for _, traffic := range traffics {
 		if traffic.Email == email {
-			return traffic
+			return &traffic
 		}
 	}
-	return xray.ClientTraffic{}
+	return &xray.ClientTraffic{}
 }
 
 func (s *SubService) getFallbackMaster(dest string, streamSettings string) (string, int, string, error) {

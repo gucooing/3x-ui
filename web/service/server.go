@@ -14,6 +14,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
@@ -780,12 +781,12 @@ func (s *ServerService) GetXrayLogs(
 		line := strings.TrimSpace(scanner.Text())
 
 		if line == "" || strings.Contains(line, "api -> api") {
-			//skipping empty lines and api calls
+			// skipping empty lines and api calls
 			continue
 		}
 
 		if filter != "" && !strings.Contains(line, filter) {
-			//applying filter if it's not empty
+			// applying filter if it's not empty
 			continue
 		}
 
